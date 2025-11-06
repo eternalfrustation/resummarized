@@ -4,3 +4,4 @@ resummarized
 assets/
 *.gz
 *.json
+.env
