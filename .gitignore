@@ -1,0 +1,6 @@
+*_templ.go
+tmp/
+resummarized
+assets/
+*.gz
+*.json

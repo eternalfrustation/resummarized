@@ -1,0 +1,11 @@
+package pages
+
+import "firebase.google.com/go/v4/auth"
+
+import "github.com/UniquityVentures/resummarized/layouts"
+
+templ Dashboard() {
+	@layouts.Navbar() {
+	<h1>Dashboard for { ctx.Value("user").(*auth.UserRecord).Email }</h1>
+	}
+}

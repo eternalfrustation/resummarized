@@ -1,0 +1,15 @@
+package pages
+
+import "github.com/UniquityVentures/resummarized/layouts"
+
+import "github.com/UniquityVentures/resummarized/components"
+type LoginForm struct {
+	Email    string
+	Password string
+}
+
+templ Login() {
+	@layouts.Card() {
+		@components.Login()
+	}
+}

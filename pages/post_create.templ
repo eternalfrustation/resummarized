@@ -1,0 +1,41 @@
+package pages
+
+import "github.com/UniquityVentures/resummarized/layouts"
+
+import "github.com/UniquityVentures/resummarized/components"
+
+type PostCreateForm struct {
+	HeadlineTitle      string
+	LeadParagraph      string
+	BackgroundContext  string
+	ResearchQuestion   string
+	SimplifiedMethods  string
+	CoreFindings       string
+	SurpriseFindings   string
+	FutureImplications string
+	StudyLimitations  string
+	NextSteps          string
+}
+
+templ PostCreatePage() {
+	@layouts.Navbar() {
+		@layouts.Card() {
+			<form method="POST" hx-boost="true">
+				<fieldset class="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4">
+					<legend class="fieldset-legend">Create Post</legend>
+					@components.TextField("HeadlineTitle", "Headline Title")
+					@components.TextArea("LeadParagraph", "LeadParagraph")
+					@components.TextArea("BackgroundContext", "BackgroundContext")
+					@components.TextArea("ResearchQuestion", "ResearchQuestion")
+					@components.TextArea("SimplifiedMethods", "SimplifiedMethods")
+					@components.TextArea("CoreFindings", "CoreFindings")
+					@components.TextArea("SurpriseFindings", "SurpriseFindings")
+					@components.TextArea("FutureImplications", "FutureImplications")
+					@components.TextArea("StudyLimitations", "StudyLimitations")
+					@components.TextArea("NextSteps", "NextSteps")
+					<button class="btn btn-neutral mt-4">Create</button>
+				</fieldset>
+			</form>
+		}
+	}
+}
