@@ -39,6 +39,7 @@ build/templ:
 build:
 	bun i
 	make -j2 build/templ build/tailwind
+	curl -SL -o assets/htmx.min.js https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js
 	find assets/ -type f \( -name '*.css' -o -name '*.js' \) -exec gzip -9 -k --force {} +
 
 # start all 5 watch processes in parallel.
