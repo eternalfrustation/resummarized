@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS admin (
+    admin_id SERIAL PRIMARY KEY,
+    admin_email TEXT NOT NULL UNIQUE
+);

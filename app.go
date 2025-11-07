@@ -8,10 +8,11 @@ import (
 	"os"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type App struct {
-	Db *pgx.Conn
+	Db *pgxpool.Pool
 }
 
 func DbConnString() string {
@@ -20,21 +21,49 @@ func DbConnString() string {
 
 func initApp() App {
 	ctx := context.Background()
-	conn, err := pgx.Connect(ctx, DbConnString())
+	poolConfig, err := pgxpool.ParseConfig(DbConnString())
+	if err != nil {
+		log.Printf("Unable to parse config: %v\n", err)
+		os.Exit(1)
+	}
+
+	conn, err := pgxpool.NewWithConfig(ctx, poolConfig)
 
 	if err != nil {
 		log.Printf("Unable to connection to database: %v\n", err)
 		os.Exit(1)
 	}
-	init_posts, err := os.ReadFile("sql/init_posts.sql")
+	app := App{
+		Db: conn,
+	}
+	if err = app.ExecQuery(ctx, "sql/init_posts.sql"); err != nil {
+		log.Fatal(err)
+	}
+	if err = app.ExecQuery(ctx, "sql/init_admin.sql"); err != nil {
+		log.Fatal(err)
+	}
+
+	return app
+}
+
+func (app *App) ExecQuery(ctx context.Context, path string, args ...any) error {
+	queryString, err := os.ReadFile(path)
 	if err != nil {
 		log.Printf("Unable to find sql for creating posts table: %v\n", err)
 		os.Exit(1)
 	}
-	conn.Exec(ctx, string(init_posts))
-	return App{
-		Db: conn,
+	_, err = app.Db.Exec(ctx, string(queryString), args...)
+	return err
+}
+
+func FetchRows[T any](app *App, ctx context.Context, path string, args ...any) ([]T, error) {
+	queryString, err := os.ReadFile(path)
+	if err != nil {
+		log.Printf("Unable to find sql for creating posts table: %v\n", err)
+		os.Exit(1)
 	}
+	rows, err := app.Db.Query(ctx, string(queryString), args...)
+	return pgx.CollectRows[T](rows, pgx.RowToStructByName[T])
 }
 
 func (app *App) Handle(next http.Handler) http.Handler {
@@ -42,4 +71,16 @@ func (app *App) Handle(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), "app", app)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func FetchRow[T any](app *App, ctx context.Context, path string, args ...any) (*T, error) {
+	queryString, err := os.ReadFile(path)
+	if err != nil {
+		log.Fatalf("Unable to find sql for creating posts table: %v\n", err)
+	}
+	rows, err := app.Db.Query(ctx, string(queryString), args...)
+	if err != nil {
+		return nil, err
+	}
+	return pgx.CollectExactlyOneRow(rows, pgx.RowToAddrOfStructByName[T])
 }
