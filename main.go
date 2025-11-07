@@ -117,7 +117,7 @@ func main() {
 	router := http.NewServeMux()
 	router.Handle("/layout_test", templ.Handler(layouts.Navbar()))
 	router.Handle("/login", (http.HandlerFunc(LoginHandler)))
-	router.Handle("/dashboard", FirebaseAuthMiddleware(authClient, templ.Handler(pages.Dashboard())))
+	router.Handle("/dashboard", FirebaseAuthMiddleware(authClient, http.HandlerFunc(DashboardHandler)))
 	router.Handle("/create", FirebaseAuthMiddleware(authClient, http.HandlerFunc(CreateHandler)))
 	router.Handle("/assets/", servefiles.NewAssetHandler("./assets/").StripOff(1) /*.WithMaxAge(24 * time.Hour) */)
 	router.HandleFunc("/auth/sessionLogin/", SessionLoginHandler)
@@ -127,8 +127,12 @@ func main() {
 	http.ListenAndServe(":4269", app.Handle(router))
 }
 
+func DashboardHandler(w http.ResponseWriter, r *http.Request) {
+
+	templ.Handler(pages.Dashboard()).ServeHTTP(w, r)
+}
+
 func CreateHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.Method)
 	if r.Method == "POST" {
 		err := r.ParseForm()
 		if err != nil {
@@ -151,20 +155,19 @@ func CreateHandler(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Unable to find sql for creating posts table: %v\n", err)
 			os.Exit(1)
 		}
-		app.Db.QueryRow(r.Context(), string(create_post), 
+		app.Db.QueryRow(r.Context(), string(create_post),
 
-
-		postCreateForm.HeadlineTitle,      // $1
-		postCreateForm.LeadParagraph,      // $2
-		postCreateForm.BackgroundContext,  // $3
-		postCreateForm.ResearchQuestion,   // $4
-		postCreateForm.SimplifiedMethods,  // $5
-		postCreateForm.CoreFindings,       // $6
-		postCreateForm.SurpriseFindings,    // $7 (If empty string is passed, it stores "" not NULL)
-		postCreateForm.FutureImplications, // $8
-		postCreateForm.StudyLimitations,   // $9
-		postCreateForm.NextSteps,          // $10
-			)
+			postCreateForm.HeadlineTitle,      // $1
+			postCreateForm.LeadParagraph,      // $2
+			postCreateForm.BackgroundContext,  // $3
+			postCreateForm.ResearchQuestion,   // $4
+			postCreateForm.SimplifiedMethods,  // $5
+			postCreateForm.CoreFindings,       // $6
+			postCreateForm.SurpriseFindings,   // $7 (If empty string is passed, it stores "" not NULL)
+			postCreateForm.FutureImplications, // $8
+			postCreateForm.StudyLimitations,   // $9
+			postCreateForm.NextSteps,          // $10
+		)
 		w.Header().Set("HX-Redirect", "/dashboard")
 	}
 
