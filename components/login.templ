@@ -33,7 +33,7 @@ templ Login() {
 				// Send the token in the request body (JSON format)
 				target: null, // Don't replace any HTML element
 				swap: null,   // Don't swap content
-				values: {idToken: idToken}
+				values: {idToken: idToken, _csrf: {{ ctx.Value("gorilla.csrf.Token").(string) }} }
 			})
 				.catch(function (error) {
 					console.error("AJAX error during token exchange:", error);
