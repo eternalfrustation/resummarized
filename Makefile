@@ -37,6 +37,7 @@ build/templ:
 	templ generate -v
 
 build:
+	bun i
 	make -j2 build/templ build/tailwind
 	find assets/ -type f \( -name '*.css' -o -name '*.js' \) -exec gzip -9 -k --force {} +
 
