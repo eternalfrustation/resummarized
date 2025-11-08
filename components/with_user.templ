@@ -1,0 +1,11 @@
+package components
+
+import "firebase.google.com/go/v4/auth"
+
+templ WithUser(children func(*auth.UserRecord) templ.Component) {
+	if v, ok := ctx.Value("user").(*auth.UserRecord); ok && v != nil {
+		@children(v)
+	} else {
+		{ children... }
+	}
+}

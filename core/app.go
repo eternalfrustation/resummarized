@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"context"
@@ -19,7 +19,7 @@ func DbConnString() string {
 	return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_NAME"))
 }
 
-func initApp() App {
+func InitApp() App {
 	ctx := context.Background()
 	poolConfig, err := pgxpool.ParseConfig(DbConnString())
 	if err != nil {
@@ -36,7 +36,7 @@ func initApp() App {
 	app := App{
 		Db: conn,
 	}
-	if err = app.ExecQuery(ctx, "sql/init_posts.sql"); err != nil {
+	if err = app.ExecQuery(ctx, "sql/init_articles.sql"); err != nil {
 		log.Fatal(err)
 	}
 	if err = app.ExecQuery(ctx, "sql/init_admin.sql"); err != nil {

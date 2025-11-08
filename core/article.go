@@ -1,12 +1,10 @@
-package main
+package core
 
 import (
 	"context"
-	"log"
-	"os"
 	"time"
 
-	"github.com/UniquityVentures/resummarized/pages"
+	"github.com/UniquityVentures/resummarized/forms"
 )
 
 type Article struct {
@@ -31,13 +29,8 @@ type Article struct {
 	DatePublished time.Time `json:"date_published" comment:"Date the summary article was published."`
 }
 
-func (app *App) CreateArticle(ctx context.Context, article pages.PostCreateForm) {
-	create_post, err := os.ReadFile("sql/create_post.sql")
-	if err != nil {
-		log.Printf("Unable to find sql for creating posts table: %v\n", err)
-		os.Exit(1)
-	}
-	app.Db.QueryRow(ctx, string(create_post),
+func (app *App) CreateArticle(ctx context.Context, article forms.PostCreateForm) {
+	app.ExecQuery(ctx, "sql/create_article.sql", 
 		article.HeadlineTitle,      // $1
 		article.LeadParagraph,      // $2
 		article.BackgroundContext,  // $3
@@ -48,5 +41,9 @@ func (app *App) CreateArticle(ctx context.Context, article pages.PostCreateForm)
 		article.FutureImplications, // $8
 		article.StudyLimitations,   // $9
 		article.NextSteps,          // $10
-	)
+		)
+}
+
+func (app *App) ListArticles(ctx context.Context, pageSize int, page int, ) ([]Article, error) {
+	return FetchRows[Article](app, ctx, "sql/list_articles.sql", pageSize, page)
 }

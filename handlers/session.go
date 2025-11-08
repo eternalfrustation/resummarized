@@ -1,9 +1,11 @@
-package main
+package handlers
 
 import (
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/UniquityVentures/resummarized/core"
 )
 
 // Define the request body structure
@@ -18,7 +20,7 @@ func SessionLoginHandler(w http.ResponseWriter, r *http.Request, tokenReq TokenR
 	expiresIn := time.Hour * 24 * 5
 
 	// 3. CRUCIAL: Create the secure session cookie using the Admin SDK
-	sessionCookie, err := authClient.SessionCookie(r.Context(), tokenReq.IDToken, expiresIn)
+	sessionCookie, err := core.GetAuthClient().SessionCookie(r.Context(), tokenReq.IDToken, expiresIn)
 	if err != nil {
 		log.Printf("Failed to create session cookie: %v", err)
 		http.Error(w, "Failed to create session", http.StatusUnauthorized)

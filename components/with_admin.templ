@@ -1,0 +1,14 @@
+package components
+
+import "firebase.google.com/go/v4/auth"
+import "github.com/UniquityVentures/resummarized/core"
+
+templ WithAdmin(children func(*auth.UserRecord) templ.Component) {
+	if v, ok := ctx.Value("user").(*auth.UserRecord); ok && v != nil {
+		if app, ok := ctx.Value("app").(*core.App); ok && app != nil {
+			if isAdmin, _ := app.IsAdmin(ctx,v.UID); isAdmin {
+				@children(v)
+			}
+		}
+	}
+}

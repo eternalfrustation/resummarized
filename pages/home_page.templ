@@ -2,7 +2,13 @@ package pages
 
 import "github.com/UniquityVentures/resummarized/layouts"
 
+import "github.com/UniquityVentures/resummarized/components"
+
 templ HomePage() {
-	@layouts.Navbar() {
+	@components.WithAdmin(AdminDashboard) {
+		@components.WithUser(UserDashboard) {
+			@layouts.Navbar() {
+			}
+		}
 	}
 }

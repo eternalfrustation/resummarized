@@ -1,42 +1,90 @@
-package middlewares 
+package middlewares
 
 import (
 	"context"
+	"log"
 	"net/http"
 
 	"firebase.google.com/go/v4/auth"
-
+	"github.com/UniquityVentures/resummarized/core"
 )
 
 func FirebaseAuthMiddleware(authClient *auth.Client, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 1. Look for the "session" cookie
 		cookie, err := r.Cookie("session")
 		if err != nil {
-			// If no cookie or error, send 401 and redirect via HTMX header
-			// Log the failed authentication, but don't expose error to client
-			w.Header().Set("HX-Redirect", "/login") // HTMX-specific redirect
-			http.Error(w, "Session cookie required", http.StatusUnauthorized)
+			next.ServeHTTP(w, r)
 			return
 		}
 
-		// 2. Verify the session cookie using the Admin SDK
-		// This checks validity, expiration, and ensures it hasn't been revoked.
 		token, err := authClient.VerifySessionCookie(r.Context(), cookie.Value)
 		if err != nil {
-			// If invalid, clear the cookie and redirect
 			http.SetCookie(w, &http.Cookie{Name: "session", Value: "", MaxAge: -1, Path: "/"})
-			w.Header().Set("HX-Redirect", "/login")
-			http.Error(w, "Invalid session", http.StatusUnauthorized)
+			next.ServeHTTP(w, r)
 			return
 		}
 
-		// 3. Cookie is valid: set the user's UID in the request context
 		ctx := context.WithValue(r.Context(), "uid", token.UID)
 		user, err := authClient.GetUser(ctx, token.UID)
+		if err != nil {
+			http.SetCookie(w, &http.Cookie{Name: "session", Value: "", MaxAge: -1, Path: "/"})
+			next.ServeHTTP(w, r)
+			return
+		}
 		ctx = context.WithValue(ctx, "user", user)
 
-		// 4. Proceed to the next handler
 		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func AuthUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, ok := r.Context().Value("uid").(string)
+		if !ok {
+			w.Header().Set("HX-Redirect", "/login") // HTMX-specific redirect
+			http.Error(w, "User is not logged in", http.StatusUnauthorized)
+			return
+		}
+
+		_, ok = r.Context().Value("app").(*core.App)
+		if !ok {
+			w.Header().Set("HX-Redirect", "/login") // HTMX-specific redirect
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func AuthAdmin(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		uid, ok := r.Context().Value("uid").(string)
+		if !ok {
+			w.Header().Set("HX-Redirect", "/login") // HTMX-specific redirect
+			http.Error(w, "User is not logged in", http.StatusUnauthorized)
+			return
+		}
+
+		app, ok := r.Context().Value("app").(*core.App)
+		if !ok {
+			w.Header().Set("HX-Redirect", "/login") // HTMX-specific redirect
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		if !ok {
+			log.Fatalln("App not inject into requests")
+		}
+		if isAdmin, err := app.IsAdmin(r.Context(), uid); !isAdmin {
+			w.Header().Set("HX-Redirect", "/login")
+			http.Error(w, "Not admin", http.StatusUnauthorized)
+			if err != nil {
+				log.Println(err)
+			}
+			return
+		}
+
+		next.ServeHTTP(w, r)
 	})
 }

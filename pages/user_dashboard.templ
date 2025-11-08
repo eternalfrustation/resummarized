@@ -4,8 +4,8 @@ import "firebase.google.com/go/v4/auth"
 
 import "github.com/UniquityVentures/resummarized/layouts"
 
-templ Dashboard() {
+templ UserDashboard(user *auth.UserRecord) {
 	@layouts.Navbar() {
-	<h1>Dashboard for { ctx.Value("user").(*auth.UserRecord).Email }</h1>
+	<h1>Dashboard for { user.Email }</h1>
 	}
 }
